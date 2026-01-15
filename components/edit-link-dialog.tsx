@@ -213,7 +213,12 @@ export function EditLinkDialog({ link, open, onOpenChange, onUpdate }: EditLinkD
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
               取消
             </Button>
             <Button type="submit" disabled={isSubmitting}>

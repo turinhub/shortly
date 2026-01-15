@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { healthCheck } from '@/lib/db';
+import { NextResponse } from 'next/server'
+import { healthCheck } from '@/lib/db'
 
 /**
  * Database health check endpoint
@@ -7,14 +7,14 @@ import { healthCheck } from '@/lib/db';
  */
 export async function GET() {
   try {
-    const isHealthy = await healthCheck();
+    const isHealthy = await healthCheck()
 
     if (isHealthy) {
       return NextResponse.json({
         status: 'ok',
         database: 'connected',
         timestamp: new Date().toISOString(),
-      });
+      })
     } else {
       return NextResponse.json(
         {
@@ -22,8 +22,8 @@ export async function GET() {
           database: 'disconnected',
           timestamp: new Date().toISOString(),
         },
-        { status: 503 }
-      );
+        { status: 503 },
+      )
     }
   } catch (error) {
     return NextResponse.json(
@@ -33,7 +33,7 @@ export async function GET() {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       },
-      { status: 503 }
-    );
+      { status: 503 },
+    )
   }
 }

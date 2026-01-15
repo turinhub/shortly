@@ -19,11 +19,31 @@ export interface Link {
  */
 export interface Activity {
   id: string
+  link_id: string
   ip: string
+  fingerprint: string | null
   device: string | null
-  region: string | null
   origin: string | null
   clicked_at: Date
+}
+
+/**
+ * Activity form data type
+ */
+export interface ActivityFormData {
+  link_id: string
+  ip: string
+  fingerprint?: string
+  device?: string
+  origin?: string
+}
+
+/**
+ * Activity with link info type
+ */
+export interface ActivityWithLink extends Activity {
+  link_short_link?: string
+  link_title?: string
 }
 
 /**

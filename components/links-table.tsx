@@ -14,7 +14,8 @@ import { Copy, ExternalLink, MoreVertical, Pencil, Trash2, BarChart3 } from 'luc
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { EditLinkDialog } from '@/components/edit-link-dialog'
-import { getLinksAction, deleteLinkAction, updateLinkStatusAction } from '@/lib/actions'
+import { DeleteLinkDialog } from '@/components/delete-link-dialog'
+import { getLinksAction, updateLinkStatusAction } from '@/lib/actions'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
@@ -38,6 +39,8 @@ export function LinksTable() {
   const [loading, setLoading] = useState(true)
   const [editingLink, setEditingLink] = useState<LinkWithStats | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [deletingLink, setDeletingLink] = useState<LinkWithStats | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const fetchLinks = async () => {
@@ -70,9 +73,17 @@ export function LinksTable() {
     }
   }, [])
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success('已复制到剪贴板')
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success('短链接已复制', {
+        description: text,
+      })
+    } catch (error) {
+      toast.error('复制失败', {
+        description: '请手动复制短链接',
+      })
+    }
   }
 
   const handleEdit = (link: LinkWithStats) => {
@@ -80,21 +91,9 @@ export function LinksTable() {
     setEditDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个链接吗？')) return
-
-    try {
-      const result = await deleteLinkAction(id)
-      if (result.success) {
-        toast.success('链接已删除')
-        fetchLinks()
-      } else {
-        toast.error(result.error || '删除失败')
-      }
-    } catch (error) {
-      console.error('Failed to delete link:', error)
-      toast.error('删除失败')
-    }
+  const handleDeleteClick = (link: LinkWithStats) => {
+    setDeletingLink(link)
+    setDeleteDialogOpen(true)
   }
 
   const handleToggleStatus = async (id: string, currentStatus: 'active' | 'frozen') => {
@@ -118,7 +117,7 @@ export function LinksTable() {
       link.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       link.long_link.toLowerCase().includes(searchQuery.toLowerCase()) ||
       link.short_link.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      link.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      link.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
   )
 
   if (loading) {
@@ -226,7 +225,7 @@ export function LinksTable() {
                               href={link.long_link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex-shrink-0"
+                              className="shrink-0"
                             >
                               <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
                             </a>
@@ -242,7 +241,9 @@ export function LinksTable() {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <span className="text-sm font-medium">{link.clicks.toLocaleString()}</span>
+                          <span className="text-sm font-medium">
+                            {link.clicks.toLocaleString()}
+                          </span>
                         </td>
                         <td className="px-4 py-4">
                           <Badge
@@ -284,7 +285,7 @@ export function LinksTable() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="flex items-center gap-2 text-destructive"
-                                onClick={() => handleDelete(link.id)}
+                                onClick={() => handleDeleteClick(link)}
                               >
                                 <Trash2 className="h-4 w-4" />
                                 删除
@@ -308,6 +309,14 @@ export function LinksTable() {
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           onUpdate={fetchLinks}
+        />
+      )}
+
+      {deletingLink && (
+        <DeleteLinkDialog
+          link={deletingLink}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
         />
       )}
     </>

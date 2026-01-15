@@ -224,7 +224,7 @@ export function CreateLinkDialog() {
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  {domain}/
+                  {domain}/s/
                 </span>
                 <Input
                   id="short_link"
@@ -232,7 +232,7 @@ export function CreateLinkDialog() {
                   placeholder="abc123"
                   value={formData.short_link}
                   onChange={(e) => setFormData((prev) => ({ ...prev, short_link: e.target.value }))}
-                  className="h-10 pl-[90px]"
+                  className="h-10 pl-[100px]"
                 />
               </div>
               <Button
@@ -250,7 +250,12 @@ export function CreateLinkDialog() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isSubmitting}
+            >
               取消
             </Button>
             <Button type="submit" disabled={!formData.long_link || isSubmitting}>
