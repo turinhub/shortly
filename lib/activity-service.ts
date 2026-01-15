@@ -239,3 +239,96 @@ export async function getLinkAnalytics(linkId: string): Promise<{
     dailyClicks,
   }
 }
+
+/**
+ * Get click trend data for the last 7 days (always returns all 7 days)
+ */
+export async function getClickTrends(
+  linkId: string,
+): Promise<Array<{ date: string; clicks: number }>> {
+  const { query } = await import('./db')
+
+  // Generate the last 7 days (from 6 days ago to today, in ascending order)
+  const last7Days: Array<{ date: string; clicks: number }> = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const monthDay = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    last7Days.unshift({ date: monthDay, clicks: 0 }) // Use unshift to add at beginning
+  }
+
+  // Get actual click data from database
+  const result = await query<{ date: string; clicks: string }>(
+    `SELECT
+       TO_CHAR(clicked_at, 'MM-DD') as date,
+       COUNT(*) as clicks
+     FROM activity
+     WHERE link_id = $1
+       AND clicked_at >= CURRENT_DATE - INTERVAL '7 days'
+     GROUP BY TO_CHAR(clicked_at, 'MM-DD'), DATE(clicked_at)
+     ORDER BY DATE(clicked_at)`,
+    [linkId],
+  )
+
+  // Create a map of actual data
+  const actualData = new Map<string, number>()
+  result.rows.forEach((row) => {
+    actualData.set(row.date, parseInt(row.clicks, 10))
+  })
+
+  // Merge: fill in actual data, keep 0 for days without data
+  return last7Days.map((day) => ({
+    date: day.date,
+    clicks: actualData.get(day.date) || 0,
+  }))
+}
+
+/**
+ * Get device distribution data
+ */
+export async function getDeviceDistribution(
+  linkId: string,
+): Promise<Array<{ name: string; value: number }>> {
+  const { query } = await import('./db')
+
+  const result = await query<{ device: string; count: string }>(
+    `SELECT device, COUNT(*) as count
+     FROM activity
+     WHERE link_id = $1
+     GROUP BY device`,
+    [linkId],
+  )
+
+  const total = result.rows.reduce((sum, row) => sum + parseInt(row.count, 10), 0)
+
+  return result.rows.map((row) => ({
+    name: row.device || 'unknown',
+    value: total > 0 ? Math.round((parseInt(row.count, 10) / total) * 100) : 0,
+  }))
+}
+
+/**
+ * Get referrer distribution data
+ */
+export async function getReferrerDistribution(
+  linkId: string,
+): Promise<Array<{ source: string; clicks: number; percentage: number }>> {
+  const { query } = await import('./db')
+
+  const result = await query<{ origin: string; count: string }>(
+    `SELECT origin, COUNT(*) as count
+     FROM activity
+     WHERE link_id = $1
+     GROUP BY origin
+     ORDER BY count DESC`,
+    [linkId],
+  )
+
+  const total = result.rows.reduce((sum, row) => sum + parseInt(row.count, 10), 0)
+
+  return result.rows.map((row) => ({
+    source: row.origin || '直接访问',
+    clicks: parseInt(row.count, 10),
+    percentage: total > 0 ? Math.round((parseInt(row.count, 10) / total) * 100) : 0,
+  }))
+}

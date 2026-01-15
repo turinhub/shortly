@@ -135,6 +135,39 @@ export async function getLinkClicks(linkId: string): Promise<number> {
 }
 
 /**
+ * Get link click count since a specific date
+ */
+export async function getLinkClicksSince(linkId: string, sinceDate: Date): Promise<number> {
+  const { query } = await import('./db')
+  const result = await query(
+    `SELECT COUNT(*) as count FROM activity WHERE link_id = $1 AND clicked_at >= $2`,
+    [linkId, sinceDate],
+  )
+  return parseInt(result.rows[0].count, 10)
+}
+
+/**
+ * Get link click statistics for different time periods
+ */
+export async function getLinkClickStats(linkId: string): Promise<{
+  lastDay: number
+  last7Days: number
+  total: number
+}> {
+  const now = new Date()
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+  const [lastDay, last7Days, total] = await Promise.all([
+    getLinkClicksSince(linkId, oneDayAgo),
+    getLinkClicksSince(linkId, sevenDaysAgo),
+    getLinkClicks(linkId),
+  ])
+
+  return { lastDay, last7Days, total }
+}
+
+/**
  * Get links with click counts
  */
 export async function getLinksWithStats(): Promise<Array<Link & { clicks: number }>> {

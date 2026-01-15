@@ -8,9 +8,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // Try to find the link
   const link = await getLinkByShortLink(code)
 
-  if (!link || link.status !== 'active') {
-    // Redirect to home page if link not found or not active
+  if (!link) {
+    // Redirect to home page if link not found
     return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  if (link.status === 'frozen') {
+    // Redirect to frozen page if link is paused
+    return NextResponse.redirect(new URL('/frozen', request.url))
   }
 
   // Record activity

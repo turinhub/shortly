@@ -8,6 +8,7 @@ import {
   deleteLink,
   getLinkById,
   getLinkClicks,
+  getLinkClickStats,
   getLinksWithStats,
   getLinksCount,
   getTotalClicks,
@@ -24,6 +25,9 @@ import {
   deleteActivitiesByLinkId,
   getActivitiesWithFilters,
   getLinkAnalytics,
+  getClickTrends,
+  getDeviceDistribution,
+  getReferrerDistribution,
 } from './activity-service'
 import type { LinkFormData, ActivityFormData } from './types'
 
@@ -172,6 +176,27 @@ export async function getLinkClicksAction(id: string) {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get link clicks',
       data: 0,
+    }
+  }
+}
+
+/**
+ * Get link click stats for different time periods
+ */
+export async function getLinkClickStatsAction(id: string) {
+  try {
+    const stats = await getLinkClickStats(id)
+    return { success: true, data: stats }
+  } catch (error) {
+    console.error('Failed to get link click stats:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get link click stats',
+      data: {
+        lastDay: 0,
+        last7Days: 0,
+        total: 0,
+      },
     }
   }
 }
@@ -393,6 +418,39 @@ export async function getLinkAnalyticsAction(linkId: string) {
         regionBreakdown: {},
         originBreakdown: {},
         dailyClicks: [],
+      },
+    }
+  }
+}
+
+/**
+ * Get link analytics data for charts
+ */
+export async function getLinkChartsDataAction(linkId: string) {
+  try {
+    const [clickTrends, deviceDistribution, referrerDistribution] = await Promise.all([
+      getClickTrends(linkId),
+      getDeviceDistribution(linkId),
+      getReferrerDistribution(linkId),
+    ])
+
+    return {
+      success: true,
+      data: {
+        clickTrends,
+        deviceDistribution,
+        referrerDistribution,
+      },
+    }
+  } catch (error) {
+    console.error('Failed to get link charts data:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get link charts data',
+      data: {
+        clickTrends: [],
+        deviceDistribution: [],
+        referrerDistribution: [],
       },
     }
   }

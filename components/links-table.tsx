@@ -10,11 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Copy, ExternalLink, MoreVertical, Pencil, Trash2, BarChart3 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Copy, ExternalLink, MoreVertical, Pencil, Trash2, BarChart3, QrCode } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { EditLinkDialog } from '@/components/edit-link-dialog'
 import { DeleteLinkDialog } from '@/components/delete-link-dialog'
+import { QRCodeDialog } from '@/components/qr-code-dialog'
 import { getLinksAction, updateLinkStatusAction } from '@/lib/actions'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -41,6 +43,8 @@ export function LinksTable() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deletingLink, setDeletingLink] = useState<LinkWithStats | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [qrLink, setQrLink] = useState<LinkWithStats | null>(null)
+  const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const fetchLinks = async () => {
@@ -89,6 +93,11 @@ export function LinksTable() {
   const handleEdit = (link: LinkWithStats) => {
     setEditingLink(link)
     setEditDialogOpen(true)
+  }
+
+  const handleQrCode = (link: LinkWithStats) => {
+    setQrLink(link)
+    setQrDialogOpen(true)
   }
 
   const handleDeleteClick = (link: LinkWithStats) => {
@@ -283,13 +292,39 @@ export function LinksTable() {
                                 <Pencil className="h-4 w-4" />
                                 编辑
                               </DropdownMenuItem>
+
                               <DropdownMenuItem
-                                className="flex items-center gap-2 text-destructive"
-                                onClick={() => handleDeleteClick(link)}
+                                className="flex items-center gap-2"
+                                onClick={() => handleQrCode(link)}
                               >
-                                <Trash2 className="h-4 w-4" />
-                                删除
+                                <QrCode className="h-4 w-4" />
+                                二维码
                               </DropdownMenuItem>
+
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <DropdownMenuItem
+                                      className={`flex items-center gap-2 ${link.clicks > 0 ? 'text-muted-foreground opacity-50 cursor-not-allowed' : 'text-destructive'}`}
+                                      onClick={(e) => {
+                                        if (link.clicks > 0) {
+                                          e.preventDefault()
+                                          return
+                                        }
+                                        handleDeleteClick(link)
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      删除
+                                    </DropdownMenuItem>
+                                  </TooltipTrigger>
+                                  {link.clicks > 0 && (
+                                    <TooltipContent>
+                                      <p>已有点击数据的链接无法删除</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -319,6 +354,8 @@ export function LinksTable() {
           onOpenChange={setDeleteDialogOpen}
         />
       )}
+
+      {qrLink && <QRCodeDialog link={qrLink} open={qrDialogOpen} onOpenChange={setQrDialogOpen} />}
     </>
   )
 }
