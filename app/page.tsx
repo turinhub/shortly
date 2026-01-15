@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import Link from "next/link"
-import { LinkIcon, BarChart3, Shield, Zap } from "lucide-react"
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import Link from 'next/link'
+import { LinkIcon, BarChart3, Shield, Zap } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -13,7 +13,7 @@ export default function LandingPage() {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
               <LinkIcon className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-xl">LinkShort</span>
+            <span className="font-bold text-xl">Shortly</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/login">
@@ -37,7 +37,9 @@ export default function LandingPage() {
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-balance">
               让每一个链接
               <br />
-              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">更有价值</span>
+              <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+                更有价值
+              </span>
             </h1>
             <p className="text-xl text-muted-foreground text-balance max-w-2xl leading-relaxed">
               创建、管理和追踪您的短链接。获取深入的数据分析，优化您的营销效果，提升用户体验。
@@ -94,7 +96,9 @@ export default function LandingPage() {
         <section className="py-20">
           <Card className="p-12 md:p-16 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">准备好开始了吗？</h2>
-            <p className="text-lg text-muted-foreground mb-8 text-balance">立即注册，免费体验专业的短链接管理服务</p>
+            <p className="text-lg text-muted-foreground mb-8 text-balance">
+              立即注册，免费体验专业的短链接管理服务
+            </p>
             <Link href="/login">
               <Button size="lg" className="text-base px-8">
                 免费注册
@@ -112,9 +116,9 @@ export default function LandingPage() {
               <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                 <LinkIcon className="h-4 w-4 text-white" />
               </div>
-              <span className="font-semibold">LinkShort</span>
+              <span className="font-semibold">Shortly</span>
             </div>
-            <p className="text-sm text-muted-foreground">© 2026 LinkShort. 保留所有权利。</p>
+            <p className="text-sm text-muted-foreground">© 2026 Shortly. 保留所有权利。</p>
           </div>
         </div>
       </footer>

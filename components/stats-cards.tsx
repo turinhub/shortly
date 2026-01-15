@@ -1,34 +1,34 @@
-import { Card } from "@/components/ui/card"
-import { Link2, MousePointerClick, TrendingUp, Users } from "lucide-react"
+import { Card } from '@/components/ui/card'
+import { Link2, MousePointerClick, TrendingUp, Users } from 'lucide-react'
 
 const stats = [
   {
-    title: "总链接数",
-    value: "1,284",
-    change: "+12.5%",
+    title: '总链接数',
+    value: '1,284',
+    change: '+12.5%',
     icon: Link2,
-    trend: "up",
+    trend: 'up',
   },
   {
-    title: "总点击量",
-    value: "45,231",
-    change: "+18.2%",
+    title: '总点击量',
+    value: '45,231',
+    change: '+18.2%',
     icon: MousePointerClick,
-    trend: "up",
+    trend: 'up',
   },
   {
-    title: "7天内点击量",
-    value: "12,458",
-    change: "+15.8%",
+    title: '7天内点击量',
+    value: '12,458',
+    change: '+15.8%',
     icon: TrendingUp,
-    trend: "up",
+    trend: 'up',
   },
   {
-    title: "活跃用户",
-    value: "8,492",
-    change: "+23.5%",
+    title: '活跃用户',
+    value: '8,492',
+    change: '+23.5%',
     icon: Users,
-    trend: "up",
+    trend: 'up',
   },
 ]
 

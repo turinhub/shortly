@@ -1,23 +1,23 @@
-"use client"
+'use client'
 
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Copy, ExternalLink, Pencil, Trash2, ToggleLeft } from "lucide-react"
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Copy, ExternalLink, Pencil, Trash2, ToggleLeft } from 'lucide-react'
 
 const mockLinkDetail = {
-  id: "1",
-  shortCode: "abc123",
-  shortUrl: "link.short/abc123",
-  originalUrl: "https://example.com/very-long-url-path/article/12345",
-  title: "产品发布公告",
-  description: "2024年第一季度新产品发布的官方公告文章",
+  id: '1',
+  shortCode: 'abc123',
+  shortUrl: 'link.short/abc123',
+  originalUrl: 'https://example.com/very-long-url-path/article/12345',
+  title: '产品发布公告',
+  description: '2024年第一季度新产品发布的官方公告文章',
   clicks: 1234,
   uniqueVisitors: 892,
-  status: "active",
-  createdAt: "2024-01-15 14:30",
-  updatedAt: "2024-01-20 09:15",
-  tags: ["产品", "公告", "营销"],
+  status: 'active',
+  createdAt: '2024-01-15 14:30',
+  updatedAt: '2024-01-20 09:15',
+  tags: ['产品', '公告', '营销'],
 }
 
 export function LinkDetails() {
@@ -34,8 +34,8 @@ export function LinkDetails() {
               <h2 className="text-2xl font-bold">{mockLinkDetail.title}</h2>
               <p className="text-muted-foreground">{mockLinkDetail.description}</p>
             </div>
-            <Badge variant={mockLinkDetail.status === "active" ? "default" : "secondary"}>
-              {mockLinkDetail.status === "active" ? "活跃" : "暂停"}
+            <Badge variant={mockLinkDetail.status === 'active' ? 'default' : 'secondary'}>
+              {mockLinkDetail.status === 'active' ? '活跃' : '暂停'}
             </Badge>
           </div>
 
@@ -46,7 +46,11 @@ export function LinkDetails() {
                 <code className="flex-1 text-lg font-mono text-primary bg-primary/10 px-4 py-3 rounded-lg">
                   {mockLinkDetail.shortUrl}
                 </code>
-                <Button variant="outline" size="icon" onClick={() => copyToClipboard(mockLinkDetail.shortUrl)}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(mockLinkDetail.shortUrl)}
+                >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
@@ -102,7 +106,9 @@ export function LinkDetails() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">独立访客</span>
-                <span className="text-2xl font-bold">{mockLinkDetail.uniqueVisitors.toLocaleString()}</span>
+                <span className="text-2xl font-bold">
+                  {mockLinkDetail.uniqueVisitors.toLocaleString()}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">转化率</span>

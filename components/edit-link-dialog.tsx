@@ -1,15 +1,21 @@
-"use client"
+'use client'
 
-import type React from "react"
+import type React from 'react'
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Pencil, X } from "lucide-react"
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Pencil, X } from 'lucide-react'
 
 interface EditLinkDialogProps {
   link: {
@@ -25,15 +31,15 @@ interface EditLinkDialogProps {
 export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps) {
   const [formData, setFormData] = useState({
     title: link.title,
-    description: link.description || "",
+    description: link.description || '',
     tags: link.tags || [],
   })
-  const [tagInput, setTagInput] = useState("")
+  const [tagInput, setTagInput] = useState('')
 
   useEffect(() => {
     setFormData({
       title: link.title,
-      description: link.description || "",
+      description: link.description || '',
       tags: link.tags || [],
     })
   }, [link])
@@ -42,7 +48,7 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
     const trimmedTag = tagInput.trim()
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
       setFormData((prev) => ({ ...prev, tags: [...prev.tags, trimmedTag] }))
-      setTagInput("")
+      setTagInput('')
     }
   }
 
@@ -54,7 +60,7 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
   }
 
   const handleTagKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault()
       addTag()
     }
@@ -62,7 +68,7 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Updating link:", { id: link.id, ...formData })
+    console.log('[v0] Updating link:', { id: link.id, ...formData })
     onOpenChange(false)
   }
 
@@ -122,14 +128,23 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
                 onKeyDown={handleTagKeyDown}
                 className="h-10"
               />
-              <Button type="button" variant="outline" onClick={addTag} className="flex-shrink-0 bg-transparent">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addTag}
+                className="flex-shrink-0 bg-transparent"
+              >
                 添加
               </Button>
             </div>
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="flex items-center gap-1 pl-2 pr-1">
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="flex items-center gap-1 pl-2 pr-1"
+                  >
                     {tag}
                     <Button
                       type="button"

@@ -1,37 +1,37 @@
-"use client"
+'use client'
 
-import { Card } from "@/components/ui/card"
-import { BarChart3, Globe, Monitor, Smartphone } from "lucide-react"
+import { Card } from '@/components/ui/card'
+import { BarChart3, Globe, Monitor, Smartphone } from 'lucide-react'
 
 const clicksData = [
-  { date: "01-15", clicks: 45 },
-  { date: "01-16", clicks: 78 },
-  { date: "01-17", clicks: 123 },
-  { date: "01-18", clicks: 95 },
-  { date: "01-19", clicks: 167 },
-  { date: "01-20", clicks: 142 },
-  { date: "01-21", clicks: 189 },
+  { date: '01-15', clicks: 45 },
+  { date: '01-16', clicks: 78 },
+  { date: '01-17', clicks: 123 },
+  { date: '01-18', clicks: 95 },
+  { date: '01-19', clicks: 167 },
+  { date: '01-20', clicks: 142 },
+  { date: '01-21', clicks: 189 },
 ]
 
 const deviceData = [
-  { name: "桌面端", value: 58, icon: Monitor },
-  { name: "移动端", value: 42, icon: Smartphone },
+  { name: '桌面端', value: 58, icon: Monitor },
+  { name: '移动端', value: 42, icon: Smartphone },
 ]
 
 const locationData = [
-  { country: "中国", clicks: 678, percentage: 55 },
-  { country: "美国", clicks: 234, percentage: 19 },
-  { country: "日本", clicks: 156, percentage: 13 },
-  { country: "韩国", clicks: 98, percentage: 8 },
-  { country: "其他", clicks: 68, percentage: 5 },
+  { country: '中国', clicks: 678, percentage: 55 },
+  { country: '美国', clicks: 234, percentage: 19 },
+  { country: '日本', clicks: 156, percentage: 13 },
+  { country: '韩国', clicks: 98, percentage: 8 },
+  { country: '其他', clicks: 68, percentage: 5 },
 ]
 
 const referrerData = [
-  { source: "直接访问", clicks: 456, percentage: 37 },
-  { source: "Twitter", clicks: 345, percentage: 28 },
-  { source: "Facebook", clicks: 234, percentage: 19 },
-  { source: "LinkedIn", clicks: 123, percentage: 10 },
-  { source: "其他", clicks: 76, percentage: 6 },
+  { source: '直接访问', clicks: 456, percentage: 37 },
+  { source: 'Twitter', clicks: 345, percentage: 28 },
+  { source: 'Facebook', clicks: 234, percentage: 19 },
+  { source: 'LinkedIn', clicks: 123, percentage: 10 },
+  { source: '其他', clicks: 76, percentage: 6 },
 ]
 
 export function LinkAnalytics() {
@@ -112,7 +112,9 @@ export function LinkAnalytics() {
                   <span className="text-sm">{location.country}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-muted-foreground">{location.clicks} 次</span>
-                    <span className="text-sm font-medium w-12 text-right">{location.percentage}%</span>
+                    <span className="text-sm font-medium w-12 text-right">
+                      {location.percentage}%
+                    </span>
                   </div>
                 </div>
               ))}
@@ -126,12 +128,18 @@ export function LinkAnalytics() {
           <h3 className="font-semibold">流量来源</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {referrerData.map((referrer) => (
-              <div key={referrer.source} className="flex flex-col gap-2 p-4 rounded-lg border border-border">
+              <div
+                key={referrer.source}
+                className="flex flex-col gap-2 p-4 rounded-lg border border-border"
+              >
                 <span className="text-sm font-medium">{referrer.source}</span>
                 <span className="text-2xl font-bold">{referrer.clicks}</span>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${referrer.percentage}%` }} />
+                    <div
+                      className="h-full bg-primary rounded-full"
+                      style={{ width: `${referrer.percentage}%` }}
+                    />
                   </div>
                   <span className="text-xs text-muted-foreground">{referrer.percentage}%</span>
                 </div>

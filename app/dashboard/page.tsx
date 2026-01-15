@@ -1,6 +1,6 @@
-import { LinksTable } from "@/components/links-table"
-import { Header } from "@/components/header"
-import { StatsCards } from "@/components/stats-cards"
+import { LinksTable } from '@/components/links-table'
+import { Header } from '@/components/header'
+import { StatsCards } from '@/components/stats-cards'
 
 export default function DashboardPage() {
   return (

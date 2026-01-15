@@ -1,9 +1,9 @@
-"use client"
+'use client'
 
-import type React from "react"
+import type React from 'react'
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -11,24 +11,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Link2, Sparkles, X } from "lucide-react"
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Plus, Link2, Sparkles, X } from 'lucide-react'
 
 export function CreateLinkDialog() {
   const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState({
-    originalUrl: "",
-    title: "",
-    customCode: "",
-    description: "",
+    originalUrl: '',
+    title: '',
+    customCode: '',
+    description: '',
     tags: [] as string[],
   })
   const [isGenerating, setIsGenerating] = useState(false)
-  const [tagInput, setTagInput] = useState("")
+  const [tagInput, setTagInput] = useState('')
 
   const generateShortCode = () => {
     setIsGenerating(true)
@@ -43,7 +43,7 @@ export function CreateLinkDialog() {
     const trimmedTag = tagInput.trim()
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
       setFormData((prev) => ({ ...prev, tags: [...prev.tags, trimmedTag] }))
-      setTagInput("")
+      setTagInput('')
     }
   }
 
@@ -55,7 +55,7 @@ export function CreateLinkDialog() {
   }
 
   const handleTagKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault()
       addTag()
     }
@@ -63,10 +63,10 @@ export function CreateLinkDialog() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Creating link:", formData)
+    console.log('[v0] Creating link:', formData)
     setOpen(false)
-    setFormData({ originalUrl: "", title: "", customCode: "", description: "", tags: [] })
-    setTagInput("")
+    setFormData({ originalUrl: '', title: '', customCode: '', description: '', tags: [] })
+    setTagInput('')
   }
 
   return (
@@ -147,14 +147,23 @@ export function CreateLinkDialog() {
                 onKeyDown={handleTagKeyDown}
                 className="h-10"
               />
-              <Button type="button" variant="outline" onClick={addTag} className="flex-shrink-0 bg-transparent">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addTag}
+                className="flex-shrink-0 bg-transparent"
+              >
                 添加
               </Button>
             </div>
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="flex items-center gap-1 pl-2 pr-1">
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="flex items-center gap-1 pl-2 pr-1"
+                  >
                     {tag}
                     <Button
                       type="button"
