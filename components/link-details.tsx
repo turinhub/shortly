@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Copy, ExternalLink, Pencil, Trash2, ToggleLeft } from 'lucide-react'
 
+const domain = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 's.zxd.ai'
+
 const mockLinkDetail = {
   id: '1',
   shortCode: 'abc123',
-  shortUrl: 'link.short/abc123',
+  shortUrl: `${domain}/abc123`,
   originalUrl: 'https://example.com/very-long-url-path/article/12345',
   title: '产品发布公告',
   description: '2024年第一季度新产品发布的官方公告文章',

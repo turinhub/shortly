@@ -3,6 +3,7 @@
 import type React from 'react'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,25 +17,31 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Link2, Sparkles, X } from 'lucide-react'
+import { Plus, Link2, Sparkles, X, Loader2 } from 'lucide-react'
+import { createAction } from '@/lib/actions'
+import { toast } from 'sonner'
 
 export function CreateLinkDialog() {
   const [open, setOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
-    originalUrl: '',
+    long_link: '',
     title: '',
-    customCode: '',
+    short_link: '',
     description: '',
     tags: [] as string[],
   })
   const [isGenerating, setIsGenerating] = useState(false)
   const [tagInput, setTagInput] = useState('')
 
+  const router = useRouter()
+  const domain = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 's.zxd.ai'
+
   const generateShortCode = () => {
     setIsGenerating(true)
     setTimeout(() => {
       const randomCode = Math.random().toString(36).substring(2, 8)
-      setFormData((prev) => ({ ...prev, customCode: randomCode }))
+      setFormData((prev) => ({ ...prev, short_link: randomCode }))
       setIsGenerating(false)
     }, 300)
   }
@@ -61,12 +68,41 @@ export function CreateLinkDialog() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('[v0] Creating link:', formData)
-    setOpen(false)
-    setFormData({ originalUrl: '', title: '', customCode: '', description: '', tags: [] })
-    setTagInput('')
+    setIsSubmitting(true)
+
+    try {
+      const userId = localStorage.getItem('userId') || process.env.NEXT_PUBLIC_DEFAULT_USER_ID || ''
+
+      const result = await createAction({
+        user_id: userId,
+        long_link: formData.long_link,
+        title: formData.title,
+        description: formData.description,
+        tags: formData.tags,
+        short_link: formData.short_link || undefined,
+      })
+
+      if (result.success) {
+        toast.success('短链接创建成功！')
+        setOpen(false)
+        router.refresh()
+
+        // 触发自定义事件通知 LinksTable 刷新
+        window.dispatchEvent(new CustomEvent('links-updated'))
+
+        setFormData({ long_link: '', title: '', short_link: '', description: '', tags: [] })
+        setTagInput('')
+      } else {
+        toast.error(result.error || '创建失败')
+      }
+    } catch (error) {
+      toast.error('创建失败，请稍后重试')
+      console.error('Failed to create link:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -89,15 +125,15 @@ export function CreateLinkDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="originalUrl" className="text-sm font-medium">
+            <Label htmlFor="long_link" className="text-sm font-medium">
               原始链接 <span className="text-destructive">*</span>
             </Label>
             <Input
-              id="originalUrl"
+              id="long_link"
               type="url"
               placeholder="https://example.com/your-long-url"
-              value={formData.originalUrl}
-              onChange={(e) => setFormData((prev) => ({ ...prev, originalUrl: e.target.value }))}
+              value={formData.long_link}
+              onChange={(e) => setFormData((prev) => ({ ...prev, long_link: e.target.value }))}
               required
               className="h-10"
             />
@@ -182,20 +218,20 @@ export function CreateLinkDialog() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="customCode" className="text-sm font-medium">
+            <Label htmlFor="short_link" className="text-sm font-medium">
               自定义短码
             </Label>
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  link.short/
+                  {domain}/
                 </span>
                 <Input
-                  id="customCode"
+                  id="short_link"
                   type="text"
                   placeholder="abc123"
-                  value={formData.customCode}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, customCode: e.target.value }))}
+                  value={formData.short_link}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, short_link: e.target.value }))}
                   className="h-10 pl-[90px]"
                 />
               </div>
@@ -214,11 +250,18 @@ export function CreateLinkDialog() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
               取消
             </Button>
-            <Button type="submit" disabled={!formData.originalUrl}>
-              创建短链接
+            <Button type="submit" disabled={!formData.long_link || isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  创建中...
+                </>
+              ) : (
+                '创建短链接'
+              )}
             </Button>
           </div>
         </form>

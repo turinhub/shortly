@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,69 +14,121 @@ import { Copy, ExternalLink, MoreVertical, Pencil, Trash2, BarChart3 } from 'luc
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { EditLinkDialog } from '@/components/edit-link-dialog'
+import { getLinksAction, deleteLinkAction, updateLinkStatusAction } from '@/lib/actions'
+import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
-const mockLinks = [
-  {
-    id: '1',
-    shortCode: 'abc123',
-    shortUrl: 'link.short/abc123',
-    originalUrl: 'https://example.com/very-long-url-path/article/12345',
-    title: '产品发布公告',
-    description: '最新产品特性的详细发布说明',
-    tags: ['产品', '公告'],
-    clicks: 1234,
-    status: 'active',
-    createdAt: '2024-01-15',
-  },
-  {
-    id: '2',
-    shortCode: 'xyz789',
-    shortUrl: 'link.short/xyz789',
-    originalUrl: 'https://docs.example.com/getting-started/installation',
-    title: '文档 - 快速开始',
-    description: '帮助新用户快速上手的安装指南',
-    tags: ['文档', '教程'],
-    clicks: 856,
-    status: 'active',
-    createdAt: '2024-01-14',
-  },
-  {
-    id: '3',
-    shortCode: 'def456',
-    shortUrl: 'link.short/def456',
-    originalUrl: 'https://blog.example.com/2024/marketing-strategy',
-    title: '营销策略文章',
-    description: '2024年度营销战略规划分析',
-    tags: ['营销', '博客'],
-    clicks: 2341,
-    status: 'active',
-    createdAt: '2024-01-13',
-  },
-  {
-    id: '4',
-    shortCode: 'ghi789',
-    shortUrl: 'link.short/ghi789',
-    originalUrl: 'https://store.example.com/products/new-release',
-    title: '新品发布页',
-    description: '最新上架产品展示页面',
-    tags: ['电商', '新品'],
-    clicks: 453,
-    status: 'paused',
-    createdAt: '2024-01-12',
-  },
-]
+const domain = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 's.zxd.ai'
+
+interface LinkWithStats {
+  id: string
+  long_link: string
+  short_link: string
+  title: string | null
+  description: string | null
+  tags: string[] | null
+  status: 'active' | 'frozen'
+  created_at: Date
+  updated_at: Date
+  clicks: number
+}
 
 export function LinksTable() {
-  const [editingLink, setEditingLink] = useState<(typeof mockLinks)[0] | null>(null)
+  const [links, setLinks] = useState<LinkWithStats[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingLink, setEditingLink] = useState<LinkWithStats | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const fetchLinks = async () => {
+    setLoading(true)
+    try {
+      const result = await getLinksAction()
+      if (result.success && result.data) {
+        setLinks(result.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch links:', error)
+      toast.error('加载链接失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchLinks()
+
+    // 监听链接更新事件
+    const handleLinksUpdated = () => {
+      fetchLinks()
+    }
+
+    window.addEventListener('links-updated', handleLinksUpdated)
+
+    return () => {
+      window.removeEventListener('links-updated', handleLinksUpdated)
+    }
+  }, [])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+    toast.success('已复制到剪贴板')
   }
 
-  const handleEdit = (link: (typeof mockLinks)[0]) => {
+  const handleEdit = (link: LinkWithStats) => {
     setEditingLink(link)
     setEditDialogOpen(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定要删除这个链接吗？')) return
+
+    try {
+      const result = await deleteLinkAction(id)
+      if (result.success) {
+        toast.success('链接已删除')
+        fetchLinks()
+      } else {
+        toast.error(result.error || '删除失败')
+      }
+    } catch (error) {
+      console.error('Failed to delete link:', error)
+      toast.error('删除失败')
+    }
+  }
+
+  const handleToggleStatus = async (id: string, currentStatus: 'active' | 'frozen') => {
+    const newStatus = currentStatus === 'active' ? 'frozen' : 'active'
+    try {
+      const result = await updateLinkStatusAction(id, newStatus)
+      if (result.success) {
+        toast.success(newStatus === 'active' ? '链接已激活' : '链接已冻结')
+        fetchLinks()
+      } else {
+        toast.error(result.error || '更新失败')
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error)
+      toast.error('更新失败')
+    }
+  }
+
+  const filteredLinks = links.filter(
+    (link) =>
+      link.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      link.long_link.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      link.short_link.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      link.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
+
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </Card>
+    )
   }
 
   return (
@@ -85,7 +137,12 @@ export function LinksTable() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">所有链接</h2>
-            <Input placeholder="搜索链接..." className="max-w-xs" />
+            <Input
+              placeholder="搜索链接..."
+              className="max-w-xs"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
           <div className="rounded-lg border border-border overflow-hidden">
@@ -120,107 +177,124 @@ export function LinksTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockLinks.map((link) => (
-                    <tr
-                      key={link.id}
-                      className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors"
-                    >
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm font-mono text-primary bg-primary/10 px-2 py-1 rounded">
-                            {link.shortUrl}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => copyToClipboard(link.shortUrl)}
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`/links/${link.id}`}
-                          className="font-medium hover:text-primary transition-colors"
-                        >
-                          {link.title}
-                        </Link>
-                        {link.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                            {link.description}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2 max-w-xs">
-                          <span className="text-sm text-muted-foreground truncate">
-                            {link.originalUrl}
-                          </span>
-                          <a
-                            href={link.originalUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-shrink-0"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
-                          </a>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {link.tags.map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm font-medium">{link.clicks.toLocaleString()}</span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Badge variant={link.status === 'active' ? 'default' : 'secondary'}>
-                          {link.status === 'active' ? '活跃' : '暂停'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm text-muted-foreground">{link.createdAt}</span>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/links/${link.id}`}
-                                className="flex items-center gap-2 cursor-pointer"
-                              >
-                                <BarChart3 className="h-4 w-4" />
-                                查看详情
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="flex items-center gap-2"
-                              onClick={() => handleEdit(link)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              编辑
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center gap-2 text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                              删除
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  {filteredLinks.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                        {searchQuery ? '没有找到匹配的链接' : '还没有创建任何链接'}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredLinks.map((link) => (
+                      <tr
+                        key={link.id}
+                        className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors"
+                      >
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <code className="text-sm font-mono text-primary bg-primary/10 px-2 py-1 rounded">
+                              {link.short_link}
+                            </code>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => copyToClipboard(link.short_link)}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Link
+                            href={`/links/${link.id}`}
+                            className="font-medium hover:text-primary transition-colors"
+                          >
+                            {link.title || '无标题'}
+                          </Link>
+                          {link.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                              {link.description}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2 max-w-xs">
+                            <span className="text-sm text-muted-foreground truncate">
+                              {link.long_link}
+                            </span>
+                            <a
+                              href={link.long_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                            </a>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {link.tags?.map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            )) || <span className="text-sm text-muted-foreground">-</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm font-medium">{link.clicks.toLocaleString()}</span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Badge
+                            variant={link.status === 'active' ? 'default' : 'secondary'}
+                            className="cursor-pointer"
+                            onClick={() => handleToggleStatus(link.id, link.status)}
+                          >
+                            {link.status === 'active' ? '活跃' : '冻结'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(link.created_at).toLocaleDateString('zh-CN')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/links/${link.id}`}
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <BarChart3 className="h-4 w-4" />
+                                  查看详情
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="flex items-center gap-2"
+                                onClick={() => handleEdit(link)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                编辑
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="flex items-center gap-2 text-destructive"
+                                onClick={() => handleDelete(link.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                删除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -229,7 +303,12 @@ export function LinksTable() {
       </Card>
 
       {editingLink && (
-        <EditLinkDialog link={editingLink} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+        <EditLinkDialog
+          link={editingLink}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onUpdate={fetchLinks}
+        />
       )}
     </>
   )

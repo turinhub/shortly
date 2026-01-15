@@ -15,22 +15,35 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Pencil, X } from 'lucide-react'
+import { Pencil, X, Loader2 } from 'lucide-react'
+import { updateLinkAction } from '@/lib/actions'
+import { toast } from 'sonner'
 
-interface EditLinkDialogProps {
-  link: {
-    id: string
-    title: string
-    description?: string
-    tags?: string[]
-  }
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface LinkWithStats {
+  id: string
+  long_link: string
+  short_link: string
+  title: string | null
+  description: string | null
+  tags: string[] | null
+  status: 'active' | 'frozen'
+  created_at: Date
+  updated_at: Date
+  clicks: number
 }
 
-export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps) {
+interface EditLinkDialogProps {
+  link: LinkWithStats
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onUpdate?: () => void
+}
+
+export function EditLinkDialog({ link, open, onOpenChange, onUpdate }: EditLinkDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
-    title: link.title,
+    long_link: link.long_link,
+    title: link.title || '',
     description: link.description || '',
     tags: link.tags || [],
   })
@@ -38,7 +51,8 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
 
   useEffect(() => {
     setFormData({
-      title: link.title,
+      long_link: link.long_link,
+      title: link.title || '',
       description: link.description || '',
       tags: link.tags || [],
     })
@@ -66,10 +80,31 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('[v0] Updating link:', { id: link.id, ...formData })
-    onOpenChange(false)
+    setIsSubmitting(true)
+
+    try {
+      const result = await updateLinkAction(link.id, {
+        long_link: formData.long_link,
+        title: formData.title,
+        description: formData.description,
+        tags: formData.tags,
+      })
+
+      if (result.success) {
+        toast.success('链接已更新')
+        onOpenChange(false)
+        onUpdate?.()
+      } else {
+        toast.error(result.error || '更新失败')
+      }
+    } catch (error) {
+      toast.error('更新失败，请稍后重试')
+      console.error('Failed to update link:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -86,8 +121,23 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-4">
           <div className="flex flex-col gap-2">
+            <Label htmlFor="edit-long-link" className="text-sm font-medium">
+              原始链接 <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="edit-long-link"
+              type="url"
+              placeholder="https://example.com/your-long-url"
+              value={formData.long_link}
+              onChange={(e) => setFormData((prev) => ({ ...prev, long_link: e.target.value }))}
+              required
+              className="h-10"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
             <Label htmlFor="edit-title" className="text-sm font-medium">
-              链接标题 <span className="text-destructive">*</span>
+              链接标题
             </Label>
             <Input
               id="edit-title"
@@ -95,9 +145,9 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
               placeholder="为您的链接添加一个描述性标题"
               value={formData.title}
               onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-              required
               className="h-10"
             />
+            <p className="text-xs text-muted-foreground">可选，用于在列表中识别链接</p>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -163,10 +213,19 @@ export function EditLinkDialog({ link, open, onOpenChange }: EditLinkDialogProps
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               取消
             </Button>
-            <Button type="submit">保存更改</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  保存中...
+                </>
+              ) : (
+                '保存更改'
+              )}
+            </Button>
           </div>
         </form>
       </DialogContent>
