@@ -1,31 +1,120 @@
 'use client'
 
-import type React from 'react'
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LinkIcon } from 'lucide-react'
+import { LinkIcon, Loader2, MessageSquare, User, Lock } from 'lucide-react'
+import { loginWithPassword, sendSmsCode, verifySmsLogin } from '@/lib/auth'
+import { toast } from 'sonner'
+import { useAuth } from '@/components/auth-provider'
+
+type LoginMethod = 'password' | 'sms'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const { refresh } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>('password')
+  const [showSmsVerify, setShowSmsVerify] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  // Password login state
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
 
-    // Simulate login - replace with actual authentication
-    setTimeout(() => {
-      const defaultUserId = process.env.NEXT_PUBLIC_DEFAULT_USER_ID
-      if (defaultUserId) {
-        localStorage.setItem('userId', defaultUserId)
-      }
-      setIsLoading(false)
-      router.push('/dashboard')
+  // SMS login state
+  const [phone, setPhone] = useState('')
+  const [smsCode, setSmsCode] = useState('')
+  const [smsId, setSmsId] = useState('')
+  const [smsType, setSmsType] = useState<'login' | 'register'>('login')
+  const [countdown, setCountdown] = useState(0)
+
+  // Countdown timer for SMS
+  const startCountdown = () => {
+    setCountdown(60)
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          return 0
+        }
+        return prev - 1
+      })
     }, 1000)
+  }
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      const result = await loginWithPassword(username, password)
+      toast.success(`欢迎回来，${result.user.username}！`)
+      await refresh()
+      router.push('/dashboard')
+    } catch (error: any) {
+      toast.error(error?.message || '登录失败，请检查用户名和密码')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSendSms = async () => {
+    if (!phone) {
+      toast.error('请输入手机号码')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const result = await sendSmsCode(phone)
+      setSmsId(result.sms_id)
+      setSmsType(result.type)
+      setShowSmsVerify(true)
+      startCountdown()
+      toast.success('验证码已发送')
+    } catch (error: any) {
+      toast.error(error?.message || '发送验证码失败')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSmsVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      await verifySmsLogin(smsId, smsType, smsCode)
+      toast.success(`登录成功，欢迎！`)
+      await refresh()
+      router.push('/dashboard')
+    } catch (error: any) {
+      toast.error(error?.message || '验证码错误')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const resetSmsForm = () => {
+    setShowSmsVerify(false)
+    setPhone('')
+    setSmsCode('')
+    setSmsId('')
+  }
+
+  const switchLoginMethod = (method: LoginMethod) => {
+    setLoginMethod(method)
+    resetSmsForm()
+    setUsername('')
+    setPassword('')
+  }
+
+  const handleRegisterClick = () => {
+    toast.info('系统暂不开放注册，请联系管理员开通账户')
   }
 
   return (
@@ -41,22 +130,204 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <Card className="p-8 bg-card/50 backdrop-blur border-border/50">
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-2xl font-bold mb-2">欢迎回来</h1>
-            <p className="text-muted-foreground">点击下方按钮直接登录</p>
+            <p className="text-muted-foreground">选择登录方式以访问您的短链接管理面板</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-              {isLoading ? '登录中...' : '直接登录'}
+          {/* Login Method Toggle */}
+          <div className="flex gap-2 mb-6 bg-muted/50 p-1 rounded-lg">
+            <Button
+              type="button"
+              variant={loginMethod === 'password' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => switchLoginMethod('password')}
+              className="flex-1"
+            >
+              <User className="h-4 w-4 mr-2" />
+              账号密码
             </Button>
-          </form>
+            <Button
+              type="button"
+              variant={loginMethod === 'sms' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => switchLoginMethod('sms')}
+              className="flex-1"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              短信验证码
+            </Button>
+          </div>
+
+          {/* Password Login Form */}
+          {loginMethod === 'password' && (
+            <form onSubmit={handlePasswordLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-sm font-medium">
+                  用户名 <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="请输入用户名"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="h-10"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  密码 <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="请输入密码"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-10"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="pt-4">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={!username || !password || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      登录中...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      登录
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* SMS Login Form - Phone Input */}
+          {loginMethod === 'sms' && !showSmsVerify && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">
+                  手机号码 <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+8613800138000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="h-10"
+                  disabled={isSubmitting}
+                />
+                <p className="text-xs text-muted-foreground">输入手机号码以接收验证码</p>
+              </div>
+
+              <div className="pt-4">
+                <Button
+                  type="button"
+                  onClick={handleSendSms}
+                  className="w-full"
+                  size="lg"
+                  disabled={!phone || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      发送中...
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      发送验证码
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* SMS Login Form - Code Verification */}
+          {loginMethod === 'sms' && showSmsVerify && (
+            <form onSubmit={handleSmsVerify} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="smsCode" className="text-sm font-medium">
+                  验证码 <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="smsCode"
+                  type="text"
+                  placeholder="请输入6位验证码"
+                  value={smsCode}
+                  onChange={(e) => setSmsCode(e.target.value)}
+                  required
+                  className="h-10"
+                  maxLength={6}
+                  disabled={isSubmitting}
+                />
+                <p className="text-xs text-muted-foreground">验证码已发送至 {phone}</p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetSmsForm}
+                  disabled={isSubmitting}
+                  className="flex-1"
+                >
+                  返回
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendSms}
+                  disabled={isSubmitting || countdown > 0}
+                  className="flex-1"
+                >
+                  {countdown > 0 ? `重新发送 (${countdown}s)` : '重新发送'}
+                </Button>
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={!smsCode || isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    验证中...
+                  </>
+                ) : (
+                  '验证登录'
+                )}
+              </Button>
+            </form>
+          )}
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             还没有账户？{' '}
-            <Link href="#" className="text-blue-400 hover:text-blue-300 font-medium">
+            <button
+              type="button"
+              onClick={handleRegisterClick}
+              className="text-blue-400 hover:text-blue-300 font-medium cursor-pointer underline-offset-4 hover:underline"
+            >
               立即注册
-            </Link>
+            </button>
           </div>
         </Card>
 

@@ -158,6 +158,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.1.18)
+      tale-js-sdk:
+        specifier: 1.1.0
+        version: 1.1.0
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1829,6 +1832,9 @@ packages:
   tailwindcss@4.1.18:
     resolution: {integrity: sha512-4+Z+0yiYyEtUVCScyfHCxOYP06L5Ne+JiHhY2IjR2KWMIWhJOYZKLSGZaP5HkZ8+bY0cxfzwDE5uOmzFXyIwxw==}
 
+  tale-js-sdk@1.1.0:
+    resolution: {integrity: sha512-+zf+FxDXEVreYNPIgZFkF20aDYmKOY+TNhUMXbEMtssN4Fiu+VCngdqBISPcCJerS5hJqdG7pVHKuhusre2nLg==}
+
   tapable@2.3.0:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
@@ -3440,6 +3446,8 @@ snapshots:
       tailwindcss: 4.1.18
 
   tailwindcss@4.1.18: {}
+
+  tale-js-sdk@1.1.0: {}
 
   tapable@2.3.0: {}
 

@@ -73,7 +73,7 @@ export function CreateLinkDialog() {
     setIsSubmitting(true)
 
     try {
-      const userId = localStorage.getItem('userId') || process.env.NEXT_PUBLIC_DEFAULT_USER_ID || ''
+      const userId = localStorage.getItem('userId') || ''
 
       const result = await createAction({
         user_id: userId,

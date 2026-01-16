@@ -1,8 +1,15 @@
+'use client'
+
 import { Link2 } from 'lucide-react'
 import Link from 'next/link'
-import { CreateLinkDialog } from '@/components/create-link-dialog'
+import { LoginDialog } from '@/components/login-dialog'
+import { UserMenu } from '@/components/user-menu'
+import { useAuth } from '@/components/auth-provider'
+import { Loader2 } from 'lucide-react'
 
 export function Header() {
+  const { user, isLoading } = useAuth()
+
   return (
     <header className="border-b border-border bg-card">
       <div className="container mx-auto px-4 max-w-7xl">
@@ -18,7 +25,15 @@ export function Header() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <CreateLinkDialog />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-9 w-9">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : user ? (
+              <UserMenu user={user} />
+            ) : (
+              <LoginDialog />
+            )}
           </div>
         </div>
       </div>
