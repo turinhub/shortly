@@ -65,10 +65,10 @@ export function LinkAnalytics({ linkId }: LinkAnalyticsProps) {
               加载中...
             </div>
           ) : (
-            <div className="flex items-end gap-2 h-48">
+            <div className="flex items-stretch gap-2 h-48">
               {clicksData.map((data) => (
                 <div key={data.date} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="w-full flex items-end justify-center h-full">
+                  <div className="w-full flex items-end justify-center flex-1">
                     <div
                       className="w-full bg-primary rounded-t transition-all hover:opacity-80"
                       style={{ height: `${maxClicks > 0 ? (data.clicks / maxClicks) * 100 : 0}%` }}

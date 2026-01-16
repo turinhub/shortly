@@ -31,7 +31,14 @@ export function QRCodeDialog({ link, open, onOpenChange }: QRCodeDialogProps) {
   useEffect(() => {
     if (open && link.short_link) {
       setGenerating(true)
-      QRCode.toDataURL(link.short_link, {
+      let fullUrl = link.short_link
+      if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+        fullUrl = fullUrl.includes('localhost') || fullUrl.includes('127.0.0.1')
+          ? `http://${fullUrl}`
+          : `https://${fullUrl}`
+      }
+      
+      QRCode.toDataURL(fullUrl, {
         width: 400,
         margin: 2,
         color: {
